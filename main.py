@@ -1,4 +1,6 @@
 from fhirpy import SyncFHIRClient
+from datetime import datetime as dt
+
 
 HAPI_BASE_URL = "http://localhost:8080/baseR4"
 
@@ -20,7 +22,7 @@ class Patient:
         if len(self.observations) == 0:
             client = SyncFHIRClient(HAPI_BASE_URL)
             resources = client.resources('Observation')
-            resources = resources.search(subject=self.id).limit(10000).sort('-date')
+            resources = resources.search(subject=self.id).limit(10000).sort('date')
             observations = resources.fetch()
 
             for observation in observations:
@@ -60,13 +62,51 @@ class Patient:
             for medication_request in medication_requests:
                 medication_dict = {
                     "name": medication_request["medicationCodeableConcept"].coding[0].display,
-                    "date": medication_request["authoredOn"]
+                    "date": medication_request["authoredOn"],
+                    "type": 'medication'  #aby sprawdzac typ podczas przechodzenia po zmieszanej liscie
                 }
                 self.medications.append(medication_dict)
 
     def get_history_in_range(self, start_date, end_date):
 
-        pass
+        history = []
+
+        start_date = dt.strptime(start_date,"%Y-%m-%d")
+        end_date = dt.strptime(end_date,"%Y-%m-%d")
+
+        counter = 0
+        for obs in self.observations:
+
+            obs_date =  dt.strptime(obs['date'][:16], "%Y-%m-%dT%H:%M")
+            if(obs_date<start_date):
+                continue
+            elif(obs_date>end_date):
+                break
+
+            while counter<len(self.medications) and dt.strptime(self.medications[counter]['date'][:16],"%Y-%m-%dT%H:%M")< obs_date:
+                if dt.strptime(self.medications[counter]['date'][:16],"%Y-%m-%dT%H:%M")<start_date:
+                    counter+=1
+                    continue
+                elif dt.strptime(self.medications[counter]['date'][:16],"%Y-%m-%dT%H:%M")>end_date:
+                    break
+                else:
+                    history.append(self.medications[counter])
+                counter += 1
+
+            history.append(obs)
+
+        for i in range(counter,len(self.medications)):
+            med_date = dt.strptime(self.medications[i]['date'][:16],"%Y-%m-%dT%H:%M")
+            if(med_date<start_date):
+                continue
+            elif(med_date>end_date):
+                break
+            else:
+                history.append(self.medications[i])
+
+        print("(get_history) found ",len(history)," notes between ",start_date," and ",end_date)
+
+        return  history
 
 def main():
     client = SyncFHIRClient(HAPI_BASE_URL)
@@ -78,6 +118,16 @@ def main():
         patient_list.append(Patient(patient))
 
     print("(main) loaded",len(patient_list), "patients")
+
+    # DO TESTOW DATY I LADOWANIA
+    patient_list[0].prepare_medications()
+    patient_list[0].prepare_observations()
+
+
+    history = patient_list[0].get_history_in_range('2007-05-08','2008-01-02')  # yyyy-mm-dd
+    for x in history:
+        print("DATE: ", x['date']," | NAME: ",x['name'] )
+    # KONIEC TESTOW  DATY I LADOWANIA
 
 if __name__ == "__main__":
     main()
