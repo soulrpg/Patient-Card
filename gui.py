@@ -122,7 +122,7 @@ class GUI:
     def patient_info_window(self, patient):
         self.form = tk.Toplevel(self.window)
         self.form.title("Dane pacjenta")
-        self.form.geometry("600x700")
+        self.form.geometry("900x700")
         
         # Zmienne
         self.name_text_value = tk.StringVar()
@@ -197,20 +197,27 @@ class GUI:
         
         #self.drop_down_list = ttk.Combobox(self.form_container, values=patient.observations_value_names)
         #self.drop_down_list.grid(row=4, column=4, sticky=tk.W, pady=5, padx=5)
-        
-        self.history_tree = ttk.Treeview(self.form_container)
-            
+
+        style = ttk.Style()
+
+        style.configure('myStyle1.Treeview', rowheight=48)
+
+        self.history_tree = ttk.Treeview(self.form_container,style='myStyle1.Treeview')
+
+
         #Definicja kolumn
         self.history_tree['columns'] = ("Date", "Type", "Info")
         
         # Defaultowa kolumna - nie potrzebujemy jej
-        self.history_tree.column("#0", width=0)
-        
+        self.history_tree.column("#0", anchor=tk.W, width=80)
+
+        self.med_img = tk.PhotoImage(file='med.png')
+        self.obs_img = tk.PhotoImage(file='obs.png')
+
         self.history_tree.column("Date", anchor=tk.W, width=100)
-        self.history_tree.column("Type", anchor=tk.W, width = 120) 
-        self.history_tree.column("Info", anchor=tk.W, width=200)
-        
-        
+        self.history_tree.column("Type", anchor=tk.W, width = 80)
+        self.history_tree.column("Info", anchor=tk.W, width=450)
+
         self.history_tree.heading("Date", text="Date", anchor=tk.CENTER)
         self.history_tree.heading("Type", text="Type", anchor=tk.CENTER)
         self.history_tree.heading("Info", text="Info", anchor=tk.CENTER)
@@ -222,16 +229,38 @@ class GUI:
         self.plot_button = tk.Button(self.form_container, command=lambda arg=patient: self.show_plot_window(patient), text="Show plot", bg="yellow")
         self.plot_button.grid(row=6, column=8, sticky=tk.W, pady=5, padx=5)
         
-        #for event in patient.get_history_in_range(self.start_date_entry.get_date(), self.end_date_entry.get_date()):
-        #    self.insert_history(event["id"], event["date"], event["type"], "INFO")
-        
-        
+
+        for i,event in enumerate(patient.get_history_in_range(str(self.start_date_entry.get_date()),str( self.end_date_entry.get_date()))):
+           self.insert_history(event,i)
+
+        self.history_tree.tag_configure('odd', background='lightblue')
+        self.history_tree.tag_configure('even', background='lightgrey')
+
+
+
         self.form.protocol("WM_DELETE_WINDOW", self.on_closing)
         
-    def insert_history(self, uid, date, type, info):
+    def insert_history(self, event, i):
         # index='end' oznacza ze dodajemy na koniec tabeli
-        self.tree_view.insert(parent='', index='end', iid=uid, text="", values=(date, type, info))
-        
+        if event["type"] != 'medication':
+           event_type = 'Observation'
+           info = event['name']
+           img = self.obs_img
+           if event['type']=='value':
+               info +=  str(event['value'])+': '+event['unit']
+           elif event['type'] == 'values':
+               info += '\n'+ event['specific_name'][0] +': ' +str(event['value'][0]) + ' ' + event['unit'][0] + '\n'
+               info += event['specific_name'][1] +': ' +str(event['value'][1]) + ' ' + event['unit'][1]
+        else:
+           event_type = 'Medication'
+           info = event['name']
+           img = self.med_img
+
+        if i%2==1:
+            self.history_tree.insert(parent='', index='end', iid=event["id"], text="", image =img ,values=(event["date"][:16].replace('T','  '), event_type, info), tags=('odd',))
+        else:
+            self.history_tree.insert(parent='', index='end', iid=event["id"], text="",image=img, values=(event["date"][:16].replace('T','  '), event_type, info), tags=('even',))
+
     def clear_history_tree(self):
         for item in self.history_tree.get_children():
             self.history_tree.delete(item)
