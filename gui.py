@@ -3,10 +3,16 @@ from tkinter import ttk
 from tkinter import Canvas
 from tkinter import messagebox
 import os
-from main import Patient, PatientsData, create_plot
+from main import Patient, PatientsData, Plot
 import copy
 from tkcalendar import Calendar, DateEntry
 import datetime
+
+import matplotlib
+matplotlib.use("TkAgg")
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+
+from matplotlib.figure import Figure
 
 
 class GUI:
@@ -186,7 +192,7 @@ class GUI:
         self.end_date_entry.set_date(end_date)
         self.start_date_entry.set_date(begin_date)
         
-        self.history_filter_button = tk.Button(self.form_container, command="self.filter_history", text="Filter history", bg="yellow")
+        self.history_filter_button = tk.Button(self.form_container, command=self.filter_history, text="Filter history", bg="yellow")
         self.history_filter_button.grid(row=4, column=4, sticky=tk.W, pady=5, padx=5)
         
         #self.drop_down_list = ttk.Combobox(self.form_container, values=patient.observations_value_names)
@@ -213,8 +219,8 @@ class GUI:
         
         self.history_tree.grid(row=5, column=1, rowspan=3, columnspan=7, sticky=tk.W, pady=5, padx=5)
         
-        self.plot_button = tk.Button(self.form_container, command="self.plot_window", text="Show plot", bg="yellow")
-        self.history_filter_button.grid(row=6, column=8, sticky=tk.W, pady=5, padx=5)
+        self.plot_button = tk.Button(self.form_container, command=lambda arg=patient: self.show_plot_window(patient), text="Show plot", bg="yellow")
+        self.plot_button.grid(row=6, column=8, sticky=tk.W, pady=5, padx=5)
         
         #for event in patient.get_history_in_range(self.start_date_entry.get_date(), self.end_date_entry.get_date()):
         #    self.insert_history(event["id"], event["date"], event["type"], "INFO")
@@ -224,7 +230,7 @@ class GUI:
         
     def insert_history(self, uid, date, type, info):
         # index='end' oznacza ze dodajemy na koniec tabeli
-        self.tree_view.insert(parent='', index='end', iid=history.id, text="", values=(uid, date, type, info))
+        self.tree_view.insert(parent='', index='end', iid=uid, text="", values=(date, type, info))
         
     def clear_history_tree(self):
         for item in self.history_tree.get_children():
@@ -234,10 +240,59 @@ class GUI:
         self.block_new_info_window = False
         self.form.destroy()
         
-    def plot_window(self):
+    # Okno do wyswietlania wykresu
+    def show_plot_window(self, patient):
+        self.plot_button["state"] = "disabled"
         self.plot_window = tk.Toplevel(self.form)
-        self.form.title("Wykres")
-        self.form.geometry("600x700")
+        self.plot_window.title("Wykres")
+        self.plot_window.geometry("800x500")
+        
+        self.plot_patient = patient
+        
+        self.plot_container = ttk.Frame(self.plot_window)
+        self.plot_container.pack(fill=tk.BOTH, expand=True)
+        
+        self.list_label = tk.Label(self.plot_container, text="Choose value:")
+        self.list_label.grid(row=0, column=0, sticky=tk.W, pady=5, padx=5)
+        
+        self.drop_down_list = ttk.Combobox(self.plot_container, 
+                            values=patient.observations_values_names)
+        self.drop_down_list.grid(row=0, column=1, sticky=tk.W, pady=5, padx=5)
+        self.drop_down_list.current(0)
+        
+        self.drop_down_list.bind("<<ComboboxSelected>>", self.update_plot_canvas)
+        
+        # Rysowanie wykresu
+        self.plot = Plot()
+        self.plot.create_plot(patient,self.drop_down_list.get(), str(self.start_date_entry.get_date()),40000)
+        self.canvas = FigureCanvasTkAgg(self.plot.fig, self.plot_container)
+        self.canvas.draw()
+        self.canvas.get_tk_widget().grid(row=1, column=0, sticky=tk.W, pady=5, padx=5, rowspan=5, columnspan=5)
+        #toolbar = NavigationToolbar2Tk(canvas, frame3)
+        #toolbar.update()
+        #self.canvas._tkcanvas.pack(row=1, column=0, sticky=tk.W, pady=5, padx=5, rowspan=5, colspan=5)
+        
+        self.plot_window.protocol("WM_DELETE_WINDOW", self.on_closing_plot)
+        
+        
+    def on_closing_plot(self):
+        self.plot_button["state"] = "normal"
+        self.plot_window.destroy()
+        
+    def filter_history(self):
+        pass
+        
+    def update_plot_canvas(self, event):
+        print("Combobox updated!")
+        self.plot.create_plot(self.plot_patient, self.drop_down_list.get(), str(self.start_date_entry.get_date()), 40000) 
+        self.plot_container.update()
+        self.canvas.draw()
+        
+        self.plot_window.update_idletasks()
+        self.plot_window.update()
+        self.canvas.draw_idle()
+        
+        
         
         
         
