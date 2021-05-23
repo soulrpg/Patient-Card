@@ -1,6 +1,8 @@
 from fhirpy import SyncFHIRClient
-from datetime import datetime as dt
+import datetime as dt
 
+import numpy as np
+import matplotlib.pyplot as plt
 
 HAPI_BASE_URL = "http://localhost:8080/baseR4"
 
@@ -16,6 +18,7 @@ class Patient:
 
         self.observations = []
         self.medications = []
+        self.observations_values_names = []
 
     def prepare_observations(self):
 
@@ -71,23 +74,23 @@ class Patient:
 
         history = []
 
-        start_date = dt.strptime(start_date,"%Y-%m-%d")
-        end_date = dt.strptime(end_date,"%Y-%m-%d")
+        start_date = dt.datetime.strptime(start_date,"%Y-%m-%d")
+        end_date = dt.datetime.strptime(end_date,"%Y-%m-%d")
 
         counter = 0
         for obs in self.observations:
 
-            obs_date =  dt.strptime(obs['date'][:16], "%Y-%m-%dT%H:%M")
+            obs_date =  dt.datetime.strptime(obs['date'][:16], "%Y-%m-%dT%H:%M")
             if(obs_date<start_date):
                 continue
             elif(obs_date>end_date):
                 break
 
-            while counter<len(self.medications) and dt.strptime(self.medications[counter]['date'][:16],"%Y-%m-%dT%H:%M")< obs_date:
-                if dt.strptime(self.medications[counter]['date'][:16],"%Y-%m-%dT%H:%M")<start_date:
+            while counter<len(self.medications) and dt.datetime.strptime(self.medications[counter]['date'][:16],"%Y-%m-%dT%H:%M")< obs_date:
+                if dt.datetime.strptime(self.medications[counter]['date'][:16],"%Y-%m-%dT%H:%M")<start_date:
                     counter+=1
                     continue
-                elif dt.strptime(self.medications[counter]['date'][:16],"%Y-%m-%dT%H:%M")>end_date:
+                elif dt.datetime.strptime(self.medications[counter]['date'][:16],"%Y-%m-%dT%H:%M")>end_date:
                     break
                 else:
                     history.append(self.medications[counter])
@@ -96,7 +99,7 @@ class Patient:
             history.append(obs)
 
         for i in range(counter,len(self.medications)):
-            med_date = dt.strptime(self.medications[i]['date'][:16],"%Y-%m-%dT%H:%M")
+            med_date = dt.datetime.strptime(self.medications[i]['date'][:16],"%Y-%m-%dT%H:%M")
             if(med_date<start_date):
                 continue
             elif(med_date>end_date):
@@ -107,6 +110,81 @@ class Patient:
         print("(get_history) found ",len(history)," notes between ",start_date," and ",end_date)
 
         return  history
+
+    def prepare_observations_values_names(self):
+        for obs in self.observations:
+            if (obs['type'] == 'values' or obs['type'] == 'value' )and obs['name'] not in self.observations_values_names:
+                self.observations_values_names.append(obs['name'])
+        return self.observations_values_names
+
+
+
+def create_plot(patient,observation_name,start_date, days):
+
+
+
+    unit = ''
+    x = []
+    y = []
+
+    y2 =[]
+    unit2 =''
+
+    specific_names =['','']
+
+
+    start_date = dt.datetime.strptime(start_date, "%Y-%m-%d")
+
+    for obs in patient.observations:
+        obs_date = dt.datetime.strptime(obs['date'][:10], "%Y-%m-%d")
+        if obs['name'] == observation_name and  obs_date>=start_date and obs_date<=start_date+dt.timedelta(days):
+            if obs['type'] == 'value':
+                unit = obs['unit']
+                x.append(obs['date'][:10]+'\n'+obs['date'][11:16])
+                y.append(obs['value'])
+            elif  obs['type'] == 'values':
+                unit = obs['unit'][0]
+                unit2 = obs['unit'][1]
+                specific_names[0] = obs['specific_name'][0]
+                specific_names[1] = obs['specific_name'][1]
+                x.append(obs['date'][:10]+'\n'+obs['date'][11:16])
+                y.append(obs['value'][0])
+                y2.append(obs['value'][1])
+
+
+    if unit2 == '':
+        fig, ax = plt.subplots()
+        fig.set_size_inches(14, 8)
+
+        ax.plot(x, y, 'o--')
+        ax.set(title=observation_name)
+        plt.ylabel(unit, rotation=0)
+
+        ax.grid()
+        plt.xticks(rotation=0)
+        plt.show()
+
+    else:
+        fig, (ax1,ax2) = plt.subplots(2,1)
+        fig.set_size_inches(14, 8)
+
+        ax1.plot(x, y, 'o--')
+        ax1.set(title=specific_names[0])
+        ax1.set_ylabel(unit)
+
+        ax2.plot(x, y2, 'o--')
+        ax2.set(title=specific_names[1])
+        ax2.set_ylabel(unit2)
+
+        #plt.ylabel(unit, rotation=0)
+        fig.tight_layout()
+        ax1.grid()
+        ax2.grid()
+        plt.yticks(rotation=0)
+        plt.xticks(rotation=0)
+
+        plt.show()
+
 
 def main():
     client = SyncFHIRClient(HAPI_BASE_URL)
@@ -129,17 +207,12 @@ def main():
         print("DATE: ", x['date']," | NAME: ",x['name'] )
     # KONIEC TESTOW  DATY I LADOWANIA
 
+    patient_list[0].prepare_observations_values_names()
+    create_plot(patient_list[0],"Body Weight","2002-11-15",40000)     #np Blood Pressure  albo Body Weight
+
+
 if __name__ == "__main__":
     main()
-
-
-
-
-
-
-
-
-
 
 
 
