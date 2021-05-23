@@ -127,9 +127,10 @@ class PatientsData:
         
     def get_patient(self, id):
         for patient in self.patients:
-            if patient.id == id:
+            if patient.identifier == id:
                 patient.prepare_observations()
                 patient.prepare_medications()
+                patient.prepare_observations_values_names()
                 return patient 
         return None
         

@@ -4,6 +4,7 @@ from tkinter import Canvas
 from tkinter import messagebox
 import os
 from main import Patient, PatientsData, create_plot
+import copy
 
 class GUI:
     def __init__(self, title, WIDTH, HEIGHT, RESIZABLE, patients):
@@ -12,6 +13,8 @@ class GUI:
         self.window.title(title)
         self.window.geometry(str(WIDTH) + "x" + str(HEIGHT))
         self.window.resizable(RESIZABLE, RESIZABLE)
+        
+        self.block_new_info_window = False
         
         # Obiekt przechowujacy informacje o wszystkich pacjentach
         self.patients_data = patients
@@ -49,9 +52,9 @@ class GUI:
         self.tree_view.column("ID", anchor=tk.W, width=120)
         
         # Nazwy kolumn
-        self.tree_view.heading("Imie", text="Imię", anchor=tk.CENTER)
-        self.tree_view.heading("Nazwisko", text="Nazwisko", anchor=tk.CENTER)
-        self.tree_view.heading("Data urodzenia", text="Data urodzenia", anchor=tk.CENTER)
+        self.tree_view.heading("Imie", text="Name", anchor=tk.CENTER)
+        self.tree_view.heading("Nazwisko", text="Surname", anchor=tk.CENTER)
+        self.tree_view.heading("Data urodzenia", text="Birth date", anchor=tk.CENTER)
         self.tree_view.heading("ID", text="ID", anchor=tk.CENTER)
         
         self.tree_view.pack()
@@ -86,17 +89,19 @@ class GUI:
         
     def insert_to_table(self, patient):
         # index='end' oznacza ze dodajemy na koniec tabeli
-        self.tree_view.insert(parent='', index='end', iid=patient.id, text="", values=(patient.name, patient.surname, patient.birth_date, patient.id))
+        self.tree_view.insert(parent='', index='end', iid=patient.id, text="", values=(patient.name, patient.surname, patient.birth_date, patient.identifier))
         
     def clear_table(self):
         for item in self.tree_view.get_children():
             self.tree_view.delete(item)
         
     def on_row_clicked(self, event):
-        item = self.tree_view.selection()[0]
-        # Tutaj zamieszczamy informacje o pacjencie + edycja?
-        print("Kliknieto: ", self.tree_view.item(item)['values'])
-        self.patient_info_window(self.patients_data.get_patient(self.tree_view.item(item)['values'][-1]))
+        if self.block_new_info_window == False:
+            item = self.tree_view.selection()[0]
+            # Tutaj zamieszczamy informacje o pacjencie + edycja?
+            print("Kliknieto: ", self.tree_view.item(item)['values'])
+            self.block_new_info_window = True
+            self.patient_info_window(self.patients_data.get_patient(self.tree_view.item(item)['values'][-1]))
         
         
     def patient_info_window(self, patient):
@@ -105,8 +110,11 @@ class GUI:
         self.form.geometry("600x700")
         
         # Zmienne
-        self.names_text_value = tk.StringVar()
-        self.names_text_value.set(patient.name + " " + patient.surname)
+        self.name_text_value = tk.StringVar()
+        self.name_text_value.set(patient.name)
+        
+        self.surname_text_value = tk.StringVar()
+        self.surname_text_value.set(patient.surname)
         
         self.gender_text_value = tk.StringVar()
         self.gender_text_value.set(patient.gender)
@@ -127,8 +135,11 @@ class GUI:
         #self.names_label = ttk.Label(self.form_container, text="Name:")
         #self.names_label.grid(row=1, column=0, sticky=tk.W, pady=5, padx=5)
         
-        self.names_text_label = ttk.Label(self.form_container, textvariable=self.names_text_value)
-        self.names_text_label.grid(row=1, column=0, sticky=tk.W, pady=5, padx=5, columnspan=2)
+        self.name_text_label = ttk.Label(self.form_container, textvariable=self.name_text_value)
+        self.name_text_label.grid(row=1, column=0, sticky=tk.W, pady=5, padx=5)
+        
+        self.surname_text_label = ttk.Label(self.form_container, textvariable=self.name_text_value)
+        self.surname_text_label.grid(row=1, column=1, sticky=tk.W, pady=5, padx=5)
         
         self.gender_label = ttk.Label(self.form_container, text="Gender:")
         self.gender_label.grid(row=2, column=0, sticky=tk.W, pady=5, padx=5)
@@ -144,7 +155,29 @@ class GUI:
         self.id_label = ttk.Label(self.form_container, text="ID:")
         self.id_label.grid(row=2, column=2, sticky=tk.W, pady=5, padx=5)
         self.id_text_label = ttk.Label(self.form_container, textvariable=self.id_text_value)
-        self.id_text_label.grid(row=2, column=3, sticky=tk.W, pady=5, padx=5)
+        self.id_text_label.grid(row=2, column=3, sticky=tk.W, pady=5, padx=5, columnspan=2)
+        
+        self.start_date_label = ttk.Label(self.form_container, text="Start date:")
+        self.start_date_label.grid(row=4, column=0, sticky=tk.W, pady=5, padx=5)
+        
+        self.start_date_entry = ttk.Entry(self.form_container)
+        self.start_date_entry.grid(row=4, column=1, sticky=tk.W, pady=5, padx=5)
+        
+        self.end_date_label = ttk.Label(self.form_container, text="End date:")
+        self.end_date_label.grid(row=4, column=2, sticky=tk.W, pady=5, padx=5)
+        
+        self.end_date_entry = ttk.Entry(self.form_container)
+        self.end_date_entry.grid(row=4, column=3, sticky=tk.W, pady=5, padx=5)
+        
+        #self.drop_down_list = ttk.Combobox(self.form_container, values=patient.observations_value_names)
+        #self.drop_down_list.grid(row=4, column=4, sticky=tk.W, pady=5, padx=5)
+        
+        self.form.protocol("WM_DELETE_WINDOW", self.on_closing)
+        
+    def on_closing(self):
+        self.block_new_info_window = False
+        self.form.destroy()
+         
         
         
         
