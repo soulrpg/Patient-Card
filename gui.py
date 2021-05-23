@@ -124,6 +124,8 @@ class GUI:
         self.form.title("Dane pacjenta")
         self.form.geometry("900x700")
         
+        self.local_patient = patient
+        
         # Zmienne
         self.name_text_value = tk.StringVar()
         self.name_text_value.set(patient.name)
@@ -226,11 +228,11 @@ class GUI:
         
         self.history_tree.grid(row=5, column=1, rowspan=3, columnspan=7, sticky=tk.W, pady=5, padx=5)
         
-        self.plot_button = tk.Button(self.form_container, command=lambda arg=patient: self.show_plot_window(patient), text="Show plot", bg="yellow")
+        self.plot_button = tk.Button(self.form_container, command=lambda arg=self.local_patient: self.show_plot_window(), text="Show plot", bg="yellow")
         self.plot_button.grid(row=6, column=8, sticky=tk.W, pady=5, padx=5)
         
 
-        for i,event in enumerate(patient.get_history_in_range(str(self.start_date_entry.get_date()),str( self.end_date_entry.get_date()))):
+        for i,event in enumerate(self.local_patient.get_history_in_range(str(self.start_date_entry.get_date()),str( self.end_date_entry.get_date()))):
            self.insert_history(event,i)
 
         self.history_tree.tag_configure('odd', background='lightblue')
@@ -270,13 +272,12 @@ class GUI:
         self.form.destroy()
         
     # Okno do wyswietlania wykresu
-    def show_plot_window(self, patient):
+    def show_plot_window(self):
         self.plot_button["state"] = "disabled"
         self.plot_window = tk.Toplevel(self.form)
         self.plot_window.title("Wykres")
         self.plot_window.geometry("800x500")
         
-        self.plot_patient = patient
         
         self.plot_container = ttk.Frame(self.plot_window)
         self.plot_container.pack(fill=tk.BOTH, expand=True)
@@ -285,15 +286,23 @@ class GUI:
         self.list_label.grid(row=0, column=0, sticky=tk.W, pady=5, padx=5)
         
         self.drop_down_list = ttk.Combobox(self.plot_container, 
-                            values=patient.observations_values_names)
+                            values=self.local_patient.observations_values_names)
         self.drop_down_list.grid(row=0, column=1, sticky=tk.W, pady=5, padx=5)
         self.drop_down_list.current(0)
         
         self.drop_down_list.bind("<<ComboboxSelected>>", self.update_plot_canvas)
         
+        self.start_date_entry_2 = DateEntry(self.plot_container, width=12, background='darkblue',
+                    foreground='white', borderwidth=2, date_pattern='yyyy-mm-dd')
+        self.start_date_entry_2.grid(row=0, column=2, sticky=tk.W, pady=5, padx=5)
+        
+        begin_date = datetime.datetime(1900, 1, 1)
+        
+        self.start_date_entry_2.set_date(begin_date)
+        
         # Rysowanie wykresu
         self.plot = Plot()
-        self.plot.create_plot(patient,self.drop_down_list.get(), str(self.start_date_entry.get_date()),40000)
+        self.plot.create_plot(self.local_patient,self.drop_down_list.get(), str(self.start_date_entry_2.get_date()),40000)
         self.canvas = FigureCanvasTkAgg(self.plot.fig, self.plot_container)
         self.canvas.draw()
         self.canvas.get_tk_widget().grid(row=1, column=0, sticky=tk.W, pady=5, padx=5, rowspan=5, columnspan=5)
@@ -309,11 +318,15 @@ class GUI:
         self.plot_window.destroy()
         
     def filter_history(self):
-        pass
+        print("FILTER HISTORY")
+        self.clear_history_tree()
+        for i,event in enumerate(self.local_patient.get_history_in_range(str(self.start_date_entry.get_date()),str( self.end_date_entry.get_date()))):
+           self.insert_history(event,i)
+        
         
     def update_plot_canvas(self, event):
         print("Combobox updated!")
-        self.plot.create_plot(self.plot_patient, self.drop_down_list.get(), str(self.start_date_entry.get_date()), 40000) 
+        self.plot.create_plot(self.local_patient, self.drop_down_list.get(), str(self.start_date_entry_2.get_date()), 40000) 
         self.plot_container.update()
         self.canvas.draw()
         
