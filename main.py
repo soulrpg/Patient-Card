@@ -10,7 +10,6 @@ import matplotlib.pyplot as plt
 
 HAPI_BASE_URL = "http://localhost:8080/baseR4"
 
-
 class Patient:
     def __init__(self, patient):
         self.name = patient["name"][0].given[0]
@@ -146,76 +145,73 @@ class PatientsData:
                 patients_filtered.append(patient)
         return patients_filtered
         
-    
+class Plot:
+    def __init__(self):
+        self.fig = None
+
+    def create_plot(self, patient,observation_name,start_date, days):
+        unit = ''
+        x = []
+        y = []
+        y2 =[]
+        unit2 =''
+
+        specific_names =['','']
+           
+
+        start_date = dt.datetime.strptime(start_date, "%Y-%m-%d")
+
+        for obs in patient.observations:
+            obs_date = dt.datetime.strptime(obs['date'][:10], "%Y-%m-%d")
+            if obs['name'] == observation_name and obs_date>=start_date and obs_date<=start_date+dt.timedelta(days):
+                if obs['type'] == 'value':
+                    unit = obs['unit']
+                    x.append(obs['date'][:10]+'\n'+obs['date'][11:16])
+                    y.append(obs['value'])
+                elif  obs['type'] == 'values':
+                    unit = obs['unit'][0]
+                    unit2 = obs['unit'][1]
+                    specific_names[0] = obs['specific_name'][0]
+                    specific_names[1] = obs['specific_name'][1]
+                    x.append(obs['date'][:10]+'\n'+obs['date'][11:16])
+                    y.append(obs['value'][0])
+                    y2.append(obs['value'][1])
 
 
+        if unit2 == '':
+            self.fig, ax = plt.subplots()
+            #fig.set_size_inches(14, 8)
+            self.fig.set_size_inches(7, 4)
+            
+            ax.plot(x, y, 'o--')
+            ax.set(title=observation_name)
+            plt.ylabel(unit, rotation=0)
 
-def create_plot(patient,observation_name,start_date, days):
+            ax.grid()
+            plt.xticks(rotation=0)
+            plt.show()
 
+        else:
+            self.fig, (ax1,ax2) = plt.subplots(2,1)
+            self.fig.set_size_inches(7, 4)
+           
+            ax1.plot(x, y, 'o--')
+            ax1.set(title=specific_names[0])
+            ax1.set_ylabel(unit)
 
+            ax2.plot(x, y2, 'o--')
+            ax2.set(title=specific_names[1])
+            ax2.set_ylabel(unit2)
 
-    unit = ''
-    x = []
-    y = []
+            #plt.ylabel(unit, rotation=0)
+            fig.tight_layout()
+            ax1.grid()
+            ax2.grid()
+            plt.yticks(rotation=0)
+            plt.xticks(rotation=0)
 
-    y2 =[]
-    unit2 =''
-
-    specific_names =['','']
-
-
-    start_date = dt.datetime.strptime(start_date, "%Y-%m-%d")
-
-    for obs in patient.observations:
-        obs_date = dt.datetime.strptime(obs['date'][:10], "%Y-%m-%d")
-        if obs['name'] == observation_name and obs_date>=start_date and obs_date<=start_date+dt.timedelta(days):
-            if obs['type'] == 'value':
-                unit = obs['unit']
-                x.append(obs['date'][:10]+'\n'+obs['date'][11:16])
-                y.append(obs['value'])
-            elif  obs['type'] == 'values':
-                unit = obs['unit'][0]
-                unit2 = obs['unit'][1]
-                specific_names[0] = obs['specific_name'][0]
-                specific_names[1] = obs['specific_name'][1]
-                x.append(obs['date'][:10]+'\n'+obs['date'][11:16])
-                y.append(obs['value'][0])
-                y2.append(obs['value'][1])
-
-
-    if unit2 == '':
-        fig, ax = plt.subplots()
-        fig.set_size_inches(14, 8)
-
-        ax.plot(x, y, 'o--')
-        ax.set(title=observation_name)
-        plt.ylabel(unit, rotation=0)
-
-        ax.grid()
-        plt.xticks(rotation=0)
-        plt.show()
-
-    else:
-        fig, (ax1,ax2) = plt.subplots(2,1)
-        fig.set_size_inches(14, 8)
-
-        ax1.plot(x, y, 'o--')
-        ax1.set(title=specific_names[0])
-        ax1.set_ylabel(unit)
-
-        ax2.plot(x, y2, 'o--')
-        ax2.set(title=specific_names[1])
-        ax2.set_ylabel(unit2)
-
-        #plt.ylabel(unit, rotation=0)
-        fig.tight_layout()
-        ax1.grid()
-        ax2.grid()
-        plt.yticks(rotation=0)
-        plt.xticks(rotation=0)
-
-        plt.show()
-        
+            plt.show()
+        return self.fig
 
 
 def main():
