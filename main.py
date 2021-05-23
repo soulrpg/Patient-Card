@@ -37,6 +37,7 @@ class Patient:
                     "category": observation["category"][0].coding[0].display,
                     "name": observation["code"].coding[0].display,
                     "date": observation["effectiveDateTime"]
+                    "id": observation["id"]
                 }
                 if "component" in observation.keys():
                     values = []
@@ -71,6 +72,7 @@ class Patient:
                     "name": medication_request["medicationCodeableConcept"].coding[0].display,
                     "date": medication_request["authoredOn"],
                     "type": 'medication'  #aby sprawdzac typ podczas przechodzenia po zmieszanej liscie
+                    "id": medication_request["id"]
                 }
                 self.medications.append(medication_dict)
 

@@ -5,6 +5,9 @@ from tkinter import messagebox
 import os
 from main import Patient, PatientsData, create_plot
 import copy
+from tkcalendar import Calendar, DateEntry
+import datetime
+
 
 class GUI:
     def __init__(self, title, WIDTH, HEIGHT, RESIZABLE, patients):
@@ -38,7 +41,13 @@ class GUI:
         self.surname_filter_entry = ttk.Entry(self.container, validate="key", validatecommand=vcmd, width = 30)
         self.surname_filter_entry.pack(side = tk.TOP, pady=(0, 20))
         
-        self.tree_view = ttk.Treeview(self.container)
+        self.tree_scroll = tk.Scrollbar(self.container)
+        self.tree_scroll.pack(side=tk.RIGHT,fill=tk.Y)
+        self.tree_view = ttk.Treeview(self.container, yscrollcommand=self.tree_scroll.set)
+        
+        #konfiguracja scrollbara
+        self.tree_scroll.config(command=self.tree_view.yview)
+        
         #Definicja kolumn
         self.tree_view['columns'] = ("Imie", "Nazwisko", "Data urodzenia", "ID")
         
@@ -138,7 +147,7 @@ class GUI:
         self.name_text_label = ttk.Label(self.form_container, textvariable=self.name_text_value)
         self.name_text_label.grid(row=1, column=0, sticky=tk.W, pady=5, padx=5)
         
-        self.surname_text_label = ttk.Label(self.form_container, textvariable=self.name_text_value)
+        self.surname_text_label = ttk.Label(self.form_container, textvariable=self.surname_text_value)
         self.surname_text_label.grid(row=1, column=1, sticky=tk.W, pady=5, padx=5)
         
         self.gender_label = ttk.Label(self.form_container, text="Gender:")
@@ -160,19 +169,63 @@ class GUI:
         self.start_date_label = ttk.Label(self.form_container, text="Start date:")
         self.start_date_label.grid(row=4, column=0, sticky=tk.W, pady=5, padx=5)
         
-        self.start_date_entry = ttk.Entry(self.form_container)
+        self.start_date_entry = DateEntry(self.form_container, width=12, background='darkblue',
+                    foreground='white', borderwidth=2, date_pattern='yyyy-mm-dd')
         self.start_date_entry.grid(row=4, column=1, sticky=tk.W, pady=5, padx=5)
+        
+        begin_date = datetime.datetime(1900, 1, 1)
+        end_date = datetime.datetime.now()
         
         self.end_date_label = ttk.Label(self.form_container, text="End date:")
         self.end_date_label.grid(row=4, column=2, sticky=tk.W, pady=5, padx=5)
         
-        self.end_date_entry = ttk.Entry(self.form_container)
+        self.end_date_entry = DateEntry(self.form_container, width=12, background='darkblue',
+                    foreground='white', borderwidth=2, date_pattern='yyyy-mm-dd')
         self.end_date_entry.grid(row=4, column=3, sticky=tk.W, pady=5, padx=5)
+        
+        self.end_date_entry.set_date(end_date)
+        self.start_date_entry.set_date(begin_date)
+        
+        self.history_filter_button = tk.Button(self.form_container, command="self.filter_history", text="Filter history", bg="yellow")
+        self.history_filter_button.grid(row=4, column=4, sticky=tk.W, pady=5, padx=5)
         
         #self.drop_down_list = ttk.Combobox(self.form_container, values=patient.observations_value_names)
         #self.drop_down_list.grid(row=4, column=4, sticky=tk.W, pady=5, padx=5)
         
+        self.history_tree = ttk.Treeview(self.form_container)
+            
+        #Definicja kolumn
+        self.history_tree['columns'] = ("Date", "Type", "Info")
+        
+        # Defaultowa kolumna - nie potrzebujemy jej
+        self.history_tree.column("#0", width=0)
+        
+        self.history_tree.column("Date", anchor=tk.W, width=100)
+        self.history_tree.column("Type", anchor=tk.W, width = 120) 
+        self.history_tree.column("Info", anchor=tk.W, width=200)
+        
+        
+        self.history_tree.heading("Date", text="Date", anchor=tk.CENTER)
+        self.history_tree.heading("Type", text="Type", anchor=tk.CENTER)
+        self.history_tree.heading("Info", text="Info", anchor=tk.CENTER)
+        
+        self.history_tree.insert(parent='', index='end', iid=patient.id, text="")
+        
+        self.history_tree.grid(row=5, column=1, rowspan=3, columnspan=7, sticky=tk.W, pady=5, padx=5)
+        
+        for event in patient.get_history_in_range(self.start_date_entry.get_date(), self.end_date_entry.get_date():
+            self.insert_history(event["id"], event["date"], event["type"], "INFO")
+        
+        
         self.form.protocol("WM_DELETE_WINDOW", self.on_closing)
+        
+    def insert_history(self, uid, date, type, info):
+        # index='end' oznacza ze dodajemy na koniec tabeli
+        self.tree_view.insert(parent='', index='end', iid=history.id, text="", values=(history.date, history.type, history.info))
+        
+    def clear_history_tree(self):
+        for item in self.history_tree.get_children():
+            self.history_tree.delete(item)
         
     def on_closing(self):
         self.block_new_info_window = False
