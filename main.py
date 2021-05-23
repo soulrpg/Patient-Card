@@ -36,7 +36,7 @@ class Patient:
                 observation_dict = {
                     "category": observation["category"][0].coding[0].display,
                     "name": observation["code"].coding[0].display,
-                    "date": observation["effectiveDateTime"]
+                    "date": observation["effectiveDateTime"], 
                     "id": observation["id"]
                 }
                 if "component" in observation.keys():
@@ -71,7 +71,7 @@ class Patient:
                 medication_dict = {
                     "name": medication_request["medicationCodeableConcept"].coding[0].display,
                     "date": medication_request["authoredOn"],
-                    "type": 'medication'  #aby sprawdzac typ podczas przechodzenia po zmieszanej liscie
+                    "type": 'medication',  #aby sprawdzac typ podczas przechodzenia po zmieszanej liscie
                     "id": medication_request["id"]
                 }
                 self.medications.append(medication_dict)
@@ -168,7 +168,7 @@ def create_plot(patient,observation_name,start_date, days):
 
     for obs in patient.observations:
         obs_date = dt.datetime.strptime(obs['date'][:10], "%Y-%m-%d")
-        if obs['name'] == observation_name and  obs_date>=start_date and obs_date<=start_date+dt.timedelta(days):
+        if obs['name'] == observation_name and obs_date>=start_date and obs_date<=start_date+dt.timedelta(days):
             if obs['type'] == 'value':
                 unit = obs['unit']
                 x.append(obs['date'][:10]+'\n'+obs['date'][11:16])

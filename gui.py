@@ -213,15 +213,18 @@ class GUI:
         
         self.history_tree.grid(row=5, column=1, rowspan=3, columnspan=7, sticky=tk.W, pady=5, padx=5)
         
-        for event in patient.get_history_in_range(self.start_date_entry.get_date(), self.end_date_entry.get_date():
-            self.insert_history(event["id"], event["date"], event["type"], "INFO")
+        self.plot_button = tk.Button(self.form_container, command="self.plot_window", text="Show plot", bg="yellow")
+        self.history_filter_button.grid(row=6, column=8, sticky=tk.W, pady=5, padx=5)
+        
+        #for event in patient.get_history_in_range(self.start_date_entry.get_date(), self.end_date_entry.get_date()):
+        #    self.insert_history(event["id"], event["date"], event["type"], "INFO")
         
         
         self.form.protocol("WM_DELETE_WINDOW", self.on_closing)
         
     def insert_history(self, uid, date, type, info):
         # index='end' oznacza ze dodajemy na koniec tabeli
-        self.tree_view.insert(parent='', index='end', iid=history.id, text="", values=(history.date, history.type, history.info))
+        self.tree_view.insert(parent='', index='end', iid=history.id, text="", values=(uid, date, type, info))
         
     def clear_history_tree(self):
         for item in self.history_tree.get_children():
@@ -230,7 +233,11 @@ class GUI:
     def on_closing(self):
         self.block_new_info_window = False
         self.form.destroy()
-         
+        
+    def plot_window(self):
+        self.plot_window = tk.Toplevel(self.form)
+        self.form.title("Wykres")
+        self.form.geometry("600x700")
         
         
         
