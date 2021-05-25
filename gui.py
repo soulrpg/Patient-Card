@@ -181,7 +181,7 @@ class GUI:
                     foreground='white', borderwidth=2, date_pattern='yyyy-mm-dd')
         self.start_date_entry.grid(row=4, column=1, sticky=tk.W, pady=5, padx=5)
         
-        begin_date = datetime.datetime(1900, 1, 1)
+        begin_date = datetime.datetime(1950, 1, 1)
         end_date = datetime.datetime.now()
         
         self.end_date_label = ttk.Label(self.form_container, text="End date:")
@@ -228,7 +228,7 @@ class GUI:
         
         self.history_tree.grid(row=5, column=1, rowspan=3, columnspan=7, sticky=tk.W, pady=5, padx=5)
         
-        self.plot_button = tk.Button(self.form_container, command=lambda arg=self.local_patient: self.show_plot_window_2(), text="Show plot", bg="yellow")
+        self.plot_button = tk.Button(self.form_container, command=lambda arg=self.local_patient: self.show_plot_window(), text="Show plot", bg="yellow")
         self.plot_button.grid(row=6, column=8, sticky=tk.W, pady=5, padx=5)
         
 
@@ -278,6 +278,8 @@ class GUI:
         self.plot_window.title("Wykres")
         self.plot_window.geometry("800x500")
         
+        self.radio_button_chosen = tk.IntVar()
+        
         
         self.plot_container = ttk.Frame(self.plot_window)
         self.plot_container.pack(fill=tk.BOTH, expand=True)
@@ -290,13 +292,19 @@ class GUI:
         self.drop_down_list.grid(row=0, column=1, sticky=tk.W, pady=5, padx=5)
         self.drop_down_list.current(0)
         
-        self.drop_down_list.bind("<<ComboboxSelected>>", self.update_plot_canvas)
+        #self.drop_down_list.bind("<<ComboboxSelected>>", self.update_plot_canvas)
+        
+        self.start_date_label_2 = tk.Label(self.plot_container, text="Choose start date:")
+        self.start_date_label_2.grid(row=0, column=2, sticky=tk.W, pady=5, padx=5)
         
         self.start_date_entry_2 = DateEntry(self.plot_container, width=12, background='darkblue',
                     foreground='white', borderwidth=2, date_pattern='yyyy-mm-dd')
-        self.start_date_entry_2.grid(row=0, column=2, sticky=tk.W, pady=5, padx=5)
+        self.start_date_entry_2.grid(row=0, column=3, sticky=tk.W, pady=5, padx=5)
         
-        begin_date = datetime.datetime(1900, 1, 1)
+        self.update_plot_button = tk.Button(self.plot_container, command=self.update_plot_canvas, text="Make plot", bg="yellow")
+        self.update_plot_button.grid(row=0, column=4, sticky=tk.W, pady=5, padx=5)
+        
+        begin_date = datetime.datetime(1950, 1, 1)
         
         self.start_date_entry_2.set_date(begin_date)
         
@@ -305,52 +313,30 @@ class GUI:
         self.plot.create_plot(self.local_patient,self.drop_down_list.get(), str(self.start_date_entry_2.get_date()),40000)
         self.canvas = FigureCanvasTkAgg(self.plot.fig, self.plot_container)
         self.canvas.draw()
-        self.canvas.get_tk_widget().grid(row=1, column=0, sticky=tk.W, pady=5, padx=5, rowspan=5, columnspan=5)
-        #toolbar = NavigationToolbar2Tk(canvas, frame3)
-        #toolbar.update()
-        #self.canvas._tkcanvas.pack(row=1, column=0, sticky=tk.W, pady=5, padx=5, rowspan=5, colspan=5)
+        self.canvas.get_tk_widget().grid(row=1, column=0, sticky=tk.W, pady=5, padx=5, rowspan=7, columnspan=5)
+        #self.toolbar = NavigationToolbar2Tk(self.canvas, self.plot_container)
+        #self.toolbar.update()
+        self.canvas._tkcanvas.grid(row=1, column=0, sticky=tk.W, pady=5, padx=5, rowspan=7, columnspan=5)
         
-        self.plot_window.protocol("WM_DELETE_WINDOW", self.on_closing_plot)
+        self.radio_label = tk.Label(self.plot_container, text="Duration:")
+        self.radio_label.grid(row=0, column=5, sticky=tk.W, pady=0, padx=5)
         
-    def show_plot_window_2(self):
-        self.plot_button["state"] = "disabled"
-        self.plot_window = tk.Toplevel(self.form)
-        self.plot_window.title("Wykres")
-        self.plot_window.geometry("800x500")
+        self.radio_button_1 = tk.Radiobutton(self.plot_container, text="2 days", variable=self.radio_button_chosen, value=1)
+        self.radio_button_1.grid(row=1, column=5, sticky=tk.W, pady=0, padx=5)
         
+        self.radio_button_2 = tk.Radiobutton(self.plot_container, text="week", variable=self.radio_button_chosen, value=2)
+        self.radio_button_2.grid(row=2, column=5, sticky=tk.W, pady=0, padx=5)
         
-        self.plot_container = ttk.Frame(self.plot_window)
-        self.plot_container.pack(fill=tk.BOTH, expand=True)
+        self.radio_button_3 = tk.Radiobutton(self.plot_container, text="month", variable=self.radio_button_chosen, value=3)
+        self.radio_button_3.grid(row=3, column=5, sticky=tk.W, pady=0, padx=5)
         
-        self.list_label = tk.Label(self.plot_container, text="Choose value:")
-        self.list_label.pack()
+        self.radio_button_4 = tk.Radiobutton(self.plot_container, text="year", variable=self.radio_button_chosen, value=4)
+        self.radio_button_4.grid(row=4, column=5, sticky=tk.W, pady=0, padx=5)
         
-        self.drop_down_list = ttk.Combobox(self.plot_container, 
-                            values=self.local_patient.observations_values_names)
-        self.drop_down_list.pack()
-        self.drop_down_list.current(0)
-        
-        self.drop_down_list.bind("<<ComboboxSelected>>", self.update_plot_canvas)
-        
-        self.start_date_entry_2 = DateEntry(self.plot_container, width=12, background='darkblue',
-                    foreground='white', borderwidth=2, date_pattern='yyyy-mm-dd')
-        self.start_date_entry_2.pack()
-        
-        begin_date = datetime.datetime(1900, 1, 1)
-        
-        self.start_date_entry_2.set_date(begin_date)
-        
-        self.plot = Plot()
-        
-       
-        self.plot.create_plot(self.local_patient,"Body Weight","2002-11-15",40000)
-        self.canvas = FigureCanvasTkAgg(self.plot.fig, self.plot_container)
-        self.canvas.draw()
-        self.canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
-        
-        self.toolbar = NavigationToolbar2Tk(self.canvas, self.plot_container)
-        self.toolbar.update()
-        self.canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        self.radio_button_5 = tk.Radiobutton(self.plot_container, text="all", variable=self.radio_button_chosen, value=5)
+        self.radio_button_5.grid(row=5, column=5, sticky=tk.W, pady=0, padx=5)
+        # Default option - all
+        self.radio_button_5.select()
         
         self.plot_window.protocol("WM_DELETE_WINDOW", self.on_closing_plot)
         
@@ -365,23 +351,41 @@ class GUI:
            self.insert_history(event,i)
         
         
-    def update_plot_canvas(self, event):
+    def update_plot_canvas(self):
         print("Combobox updated!")
-        self.plot.create_plot(self.local_patient, self.drop_down_list.get(), str(self.start_date_entry_2.get_date()), 40000) 
+        duration = 0
+        val = self.radio_button_chosen.get()
+        if val == 1:
+            duration = 2
+        elif val == 2:
+            duration = 7
+        elif val == 3:
+            duration = 31
+        elif val == 4:
+            duration = 365
+        elif val == 5:
+            duration = 40000
+        
+        
+        self.plot.create_plot(self.local_patient, self.drop_down_list.get(), str(self.start_date_entry_2.get_date()), duration) 
         
         self.plot_container.update()
         
         self.canvas.draw()
         
-        self.canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True) # XD
+        #self.canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True) # XD
+        self.canvas.get_tk_widget().grid(row=1, column=0, sticky=tk.W, pady=5, padx=5, rowspan=5, columnspan=5)
+
         
-        self.toolbar.update()
+        #self.toolbar.update()
 
         
         #self.plot_window.update_idletasks()
         #self.plot_window.update()
         #self.canvas.draw_idle()
-        self.canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        #self.canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        self.canvas._tkcanvas.grid(row=1, column=0, sticky=tk.W, pady=5, padx=5, rowspan=5, columnspan=5)
+
         
         
         

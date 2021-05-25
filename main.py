@@ -150,7 +150,7 @@ class PatientsData:
         
 class Plot:
     def __init__(self):
-        self.fig = Figure(figsize=(12,6), dpi=100)
+        self.fig = Figure(figsize=(7, 4), dpi=100)
 
     def create_plot(self, patient,observation_name,start_date, days):
         print("CREATE PLOT:", observation_name)
