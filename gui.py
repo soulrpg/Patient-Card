@@ -228,7 +228,7 @@ class GUI:
         
         self.history_tree.grid(row=5, column=1, rowspan=3, columnspan=7, sticky=tk.W, pady=5, padx=5)
         
-        self.plot_button = tk.Button(self.form_container, command=lambda arg=self.local_patient: self.show_plot_window(), text="Show plot", bg="yellow")
+        self.plot_button = tk.Button(self.form_container, command=lambda arg=self.local_patient: self.show_plot_window_2(), text="Show plot", bg="yellow")
         self.plot_button.grid(row=6, column=8, sticky=tk.W, pady=5, padx=5)
         
 
@@ -312,6 +312,47 @@ class GUI:
         
         self.plot_window.protocol("WM_DELETE_WINDOW", self.on_closing_plot)
         
+    def show_plot_window_2(self):
+        self.plot_button["state"] = "disabled"
+        self.plot_window = tk.Toplevel(self.form)
+        self.plot_window.title("Wykres")
+        self.plot_window.geometry("800x500")
+        
+        
+        self.plot_container = ttk.Frame(self.plot_window)
+        self.plot_container.pack(fill=tk.BOTH, expand=True)
+        
+        self.list_label = tk.Label(self.plot_container, text="Choose value:")
+        self.list_label.pack()
+        
+        self.drop_down_list = ttk.Combobox(self.plot_container, 
+                            values=self.local_patient.observations_values_names)
+        self.drop_down_list.pack()
+        self.drop_down_list.current(0)
+        
+        self.drop_down_list.bind("<<ComboboxSelected>>", self.update_plot_canvas)
+        
+        self.start_date_entry_2 = DateEntry(self.plot_container, width=12, background='darkblue',
+                    foreground='white', borderwidth=2, date_pattern='yyyy-mm-dd')
+        self.start_date_entry_2.pack()
+        
+        begin_date = datetime.datetime(1900, 1, 1)
+        
+        self.start_date_entry_2.set_date(begin_date)
+        
+        self.plot = Plot()
+        
+       
+        self.plot.create_plot(self.local_patient,"Body Weight","2002-11-15",40000)
+        self.canvas = FigureCanvasTkAgg(self.plot.fig, self.plot_container)
+        self.canvas.draw()
+        self.canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
+        
+        self.toolbar = NavigationToolbar2Tk(self.canvas, self.plot_container)
+        self.toolbar.update()
+        self.canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        
+        self.plot_window.protocol("WM_DELETE_WINDOW", self.on_closing_plot)
         
     def on_closing_plot(self):
         self.plot_button["state"] = "normal"
@@ -327,12 +368,20 @@ class GUI:
     def update_plot_canvas(self, event):
         print("Combobox updated!")
         self.plot.create_plot(self.local_patient, self.drop_down_list.get(), str(self.start_date_entry_2.get_date()), 40000) 
+        
         self.plot_container.update()
+        
         self.canvas.draw()
         
-        self.plot_window.update_idletasks()
-        self.plot_window.update()
-        self.canvas.draw_idle()
+        self.canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True) # XD
+        
+        self.toolbar.update()
+
+        
+        #self.plot_window.update_idletasks()
+        #self.plot_window.update()
+        #self.canvas.draw_idle()
+        self.canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
         
         
         

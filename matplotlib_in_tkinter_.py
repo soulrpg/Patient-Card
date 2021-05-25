@@ -18,7 +18,7 @@ warnings.filterwarnings("ignore")
 
 window = tk.Tk()
 window.title("Rzut Poziomy")
-window.iconbitmap( default="clienticon4.ico")
+#window.iconbitmap( default="clienticon4.ico")
 window.geometry('1280x720')
 
 
