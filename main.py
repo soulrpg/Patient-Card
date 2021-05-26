@@ -163,7 +163,6 @@ class PatientsData:
                 patient_res = resources.fetch()
                 patient_res[0]["name"][0].family = surname
                 patient_res[0].save()
-
                 break
 
 class Plot:

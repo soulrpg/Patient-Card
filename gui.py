@@ -36,7 +36,7 @@ class GUI:
         self.container = ttk.Frame(self.window)
         self.container.pack()
         
-        self.table_name = ttk.Label(self.container, text="Surname search")
+        self.table_name = ttk.Label(self.container, text="Search by surname")
         self.table_name.pack(side=tk.TOP, pady=(20, 0))
         
         #self.surname_filter_label = ttk.Label(self.container, text="Filtr nazwiska:")
@@ -429,7 +429,7 @@ class GUI:
 
         self.edit_surname_window = tk.Toplevel(self.form)
         self.edit_surname_window.title("Edit surname")
-        self.edit_surname_window.geometry("300x100")
+        self.edit_surname_window.geometry("350x60")
 
 
         self.edit_surname_container = ttk.Frame(self.edit_surname_window)
@@ -442,7 +442,7 @@ class GUI:
         self.surname_edit_entry.grid(row=0, column=1, sticky=tk.W, pady=5, padx=5)
 
         self.save_surname_button = tk.Button(self.edit_surname_container, command=self.on_save_surname, text="Save",bg="yellow")
-        self.save_surname_button.grid(row=1, column=1, sticky=tk.W, pady=5, padx=5)
+        self.save_surname_button.grid(row=0, column=2, sticky=tk.W, pady=5, padx=5)
 
         self.edit_surname_window.protocol("WM_DELETE_WINDOW", self.on_close_edit_surname)
 
