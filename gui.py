@@ -22,7 +22,11 @@ class GUI:
         self.window.title(title)
         self.window.geometry(str(WIDTH) + "x" + str(HEIGHT))
         self.window.resizable(RESIZABLE, RESIZABLE)
-        
+
+        #do zapisania id obiektu z historii
+        self.history_object_id = 0
+        self.tmp_array = []
+
         self.block_new_info_window = False
         
         # Obiekt przechowujacy informacje o wszystkich pacjentach
@@ -181,7 +185,7 @@ class GUI:
         self.id_text_label = ttk.Label(self.form_container, textvariable=self.identifier_text_value, background="#fefefe")
         self.id_text_label.grid(row=1, column=4, sticky=tk.W, pady=5, padx=5)
 
-        self.edit_surname_button = tk.Button(self.form_container, command=self.show_edit_surname_window, text="Edit surname",bg="#8899dd")
+        self.edit_surname_button = tk.Button(self.form_container, command=self.show_edit_surname_window, text="Edit surname",bg="#00aaff")
         self.edit_surname_button.grid(row=1, column=5, sticky=tk.W, pady=5, padx=5)
 
         self.born_label = ttk.Label(self.form_container, text="Born:")
@@ -231,6 +235,9 @@ class GUI:
         #self.drop_down_list = ttk.Combobox(self.form_container, values=patient.observations_value_names)
         #self.drop_down_list.grid(row=4, column=4, sticky=tk.W, pady=5, padx=5)
 
+        self.click_to_edit_label = ttk.Label(self.form_container, text="( Dobule-click on a line to edit )")
+        self.click_to_edit_label.grid(row=4, column=6, sticky=tk.W, pady=5, padx=5)
+
         style = ttk.Style()
 
         style.configure('myStyle1.Treeview', rowheight=48)
@@ -250,35 +257,45 @@ class GUI:
         self.history_tree.column("Date", anchor=tk.W, width=100)
         self.history_tree.column("Type", anchor=tk.W, width = 80)
         self.history_tree.column("Info", anchor=tk.W, width=600)
+      #  self.history_tree.column("Id", anchor=tk.W, width=0)
 
         self.history_tree.heading("Date", text="Date", anchor=tk.CENTER)
         self.history_tree.heading("Type", text="Type", anchor=tk.CENTER)
         self.history_tree.heading("Info", text="Info", anchor=tk.CENTER)
-        
+
+
         self.history_tree.insert(parent='', index='end', iid=patient.id, text="")
         
         self.history_tree.grid(row=5, column=1, rowspan=3, columnspan=7, sticky=tk.W, pady=5, padx=5)
         
         self.plot_button = tk.Button(self.form_container, command=lambda arg=self.local_patient: self.show_plot_window(), text="Show plot", bg="yellow")
         self.plot_button.grid(row=6, column=8, sticky=tk.W, pady=5, padx=5)
-        
 
-        for i,event in enumerate(self.local_patient.get_history_in_range(str(self.start_date_entry.get_date()),str( self.end_date_entry.get_date()))):
-           self.insert_history(event,i)
+
+        # for i,event in enumerate(self.local_patient.get_history_in_range(str(self.start_date_entry.get_date()),str( self.end_date_entry.get_date()))):
+        #    self.insert_history(event,i)
+        # better option:
+        self.filter_history()
 
         self.history_tree.tag_configure('odd', background='lightblue')
         self.history_tree.tag_configure('even', background='lightgrey')
 
+        # reakcja na klikniecia
+        self.block_patient_info_window = False
+        # Listener na klikniecia
+        self.history_tree.bind("<Double-1>", self.on_history_row_clicked)
 
 
         self.form.protocol("WM_DELETE_WINDOW", self.on_closing)
         
     def insert_history(self, event, i):
         # index='end' oznacza ze dodajemy na koniec tabeli
+        id = event['id']
         if event["type"] != 'medication':
            event_type = 'Observation'
-           info = event['name']
+           info = '[' +event['category']+ '] ' + event['name']
            img = self.obs_img
+
            if event['type']=='value':
                info +=  '\n'+str(event['value'])+' '+event['unit']
            elif event['type'] == 'values':
@@ -290,9 +307,9 @@ class GUI:
            img = self.med_img
 
         if i%2==1:
-            self.history_tree.insert(parent='', index='end', iid=event["id"], text="", image =img ,values=(event["date"][:16].replace('T','  '), event_type, info), tags=('odd',))
+            self.history_tree.insert(parent='', index='end', iid=event["id"], text="", image =img ,values=(event["date"][:16].replace('T','  '), event_type, info, id), tags=('odd',))
         else:
-            self.history_tree.insert(parent='', index='end', iid=event["id"], text="",image=img, values=(event["date"][:16].replace('T','  '), event_type, info), tags=('even',))
+            self.history_tree.insert(parent='', index='end', iid=event["id"], text="",image=img, values=(event["date"][:16].replace('T','  '), event_type, info, id), tags=('even',))
 
     def clear_history_tree(self):
         for item in self.history_tree.get_children():
@@ -383,7 +400,7 @@ class GUI:
         print("FILTER HISTORY")
         self.clear_history_tree()
         for i,event in enumerate(self.local_patient.get_history_in_range(str(self.start_date_entry.get_date()),str( self.end_date_entry.get_date()))):
-           self.insert_history(event,i)
+           self.insert_history(event, i)
         
         
     def update_plot_canvas(self):
@@ -467,7 +484,120 @@ class GUI:
         self.on_close_edit_surname()
         
 
+    def on_history_row_clicked(self, event):
+        if self.block_patient_info_window == False:
+            item = self.history_tree.selection()[0]
+            self.block_patient_info_window = True
+
+            print("[Historia] Kliknieto: ", self.history_tree.item(item)['values'])
+            self.history_object_id = self.history_tree.item(item)['values'][3]
+            if self.history_tree.item(item)['values'][1] == 'Observation':
+                self.show_edit_observation_window()
+            else:
+                self.show_edit_medication_window(self.history_tree.item(item)['values'][2])
+
+    def show_edit_medication_window(self,text_name):
+        self.edit_surname_button["state"] = "disabled"
+        self.plot_button["state"] = "disabled"
+        self.history_filter_button["state"] = "disabled"
+
+        self.edit_medication_window = tk.Toplevel(self.form)
+        self.edit_medication_window.title("Edit medication request info")
+        self.edit_medication_window.geometry("400x80")
+
+
+        self.edit_medication_container = ttk.Frame(self.edit_medication_window)
+        self.edit_medication_container.pack(fill=tk.BOTH, expand=True)
+
+        self.new_medication_info_label = tk.Label(self.edit_medication_container, text="New info:")
+        self.new_medication_info_label.grid(row=0, column=0, sticky=tk.W, pady=5, padx=5)
+
+        self.medication_info_edit_entry_text = tk.StringVar()
+        self.medication_info_edit_entry_text.set(text_name)
+
+        self.medication_info_edit_entry = ttk.Entry(self.edit_medication_container, validate="key", width=52, textvariable =  self.medication_info_edit_entry_text)
+        self.medication_info_edit_entry.grid(row=0, column=1, sticky=tk.W, pady=5, padx=5)
+
+
+
+        self.save_medication_info_button = tk.Button(self.edit_medication_container, command=self.on_save_medication_info, text="Save",bg="yellow")
+        self.save_medication_info_button.grid(row=1, column=1, sticky=tk.W, pady=5, padx=5)
+
+        self.edit_medication_window.protocol("WM_DELETE_WINDOW", self.on_close_edit_medication)
         
-        
-        
-        
+    def on_close_edit_medication(self):
+        self.edit_surname_button["state"] = "normal"
+        self.plot_button["state"] = "normal"
+        self.history_filter_button["state"] = "normal"
+        self.block_patient_info_window = False
+        self.edit_medication_window.destroy()
+
+    def on_save_medication_info(self):
+        new_info = self.medication_info_edit_entry.get()
+
+        self.local_patient.set_medication_name( self.history_object_id,new_info)
+        self.patients_data.update_medication_name(self.history_object_id,new_info)
+        self.filter_history()
+        self.on_close_edit_medication()
+
+    def show_edit_observation_window(self):
+        self.edit_surname_button["state"] = "disabled"
+        self.plot_button["state"] = "disabled"
+        self.history_filter_button["state"] = "disabled"
+
+        self.edit_observation_window = tk.Toplevel(self.form)
+        self.edit_observation_window.title("Edit observation")
+        self.edit_observation_window.geometry("400x120")
+
+        self.tmp_array = self.local_patient.get_observation_properties( self.history_object_id)
+
+        self.edit_observation_container = ttk.Frame(self.edit_observation_window)
+        self.edit_observation_container.pack(fill=tk.BOTH, expand=True)
+
+        self.observation_name_edit_entry_text = tk.StringVar()
+        self.observation_name_edit_entry_text.set(self.tmp_array[0])
+
+        self.new_observation_name_label = tk.Label(self.edit_observation_container, text="New name:")
+        self.new_observation_name_label.grid(row=0, column=0, sticky=tk.W, pady=5, padx=5)
+
+        self.observation_name_edit_entry = ttk.Entry(self.edit_observation_container, validate="key", width=50 ,textvariable=self.observation_name_edit_entry_text)
+        self.observation_name_edit_entry.grid(row=0, column=1, sticky=tk.W, pady=5, padx=5)
+
+        if len(self.tmp_array)>1:
+            self.observation_value_edit_entry_text = tk.StringVar()
+            self.observation_value_edit_entry_text.set(self.tmp_array[1])
+
+            self.new_observation_value_label = tk.Label(self.edit_observation_container, text="New value:")
+            self.new_observation_value_label.grid(row=1, column=0, sticky=tk.W, pady=5, padx=5)
+
+            self.observation_value_edit_entry = ttk.Entry(self.edit_observation_container, validate="key", width=50, textvariable= self.observation_value_edit_entry_text)
+            self.observation_value_edit_entry.grid(row=1, column=1, sticky=tk.W, pady=5, padx=5)
+
+
+        self.save_observation_info_button = tk.Button(self.edit_observation_container,
+                                                     command=self.on_save_observation_info, text="Save", bg="yellow")
+        self.save_observation_info_button.grid(row=2, column=1, sticky=tk.W, pady=5, padx=5)
+
+        self.edit_observation_window.protocol("WM_DELETE_WINDOW", self.on_close_edit_observation)
+
+    def on_close_edit_observation(self):
+        self.edit_surname_button["state"] = "normal"
+        self.plot_button["state"] = "normal"
+        self.history_filter_button["state"] = "normal"
+        self.block_patient_info_window = False
+        self.edit_observation_window.destroy()
+
+    def on_save_observation_info(self):
+        new_name = self.observation_name_edit_entry.get()
+        val = -999999.0
+        try:
+            if len(self.tmp_array) > 1:
+                val = float(self.observation_value_edit_entry.get().replace(',', '.'))
+            self.local_patient.set_observation_name_val(self.history_object_id, new_name, val)
+
+            self.patients_data.update_observation_name_val(self.history_object_id, new_name, val)
+        except:
+            print("ERROR IN on_save_observation_info")
+
+        self.filter_history()
+        self.on_close_edit_observation()

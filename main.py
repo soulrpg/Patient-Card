@@ -26,8 +26,34 @@ class Patient:
         self.medications = []
         self.observations_values_names = []
 
+
     def set_surname(self, surname):
         self.surname = surname
+
+    def set_medication_name(self,med_id, name):
+        for i,med in enumerate(self.medications):
+            if med['id'] == med_id:
+                self.medications[i]['name'] = name
+                break
+
+    def set_observation_name_val(self,obs_id,name, val):
+        for i,obs in enumerate(self.observations):
+            if obs['id'] == obs_id:
+                self.observations[i]['name'] = name
+                if val > -999999.0:
+                    self.observations[i]['value'] = val
+                break
+
+    def get_observation_properties(self,obs_id):
+        props = []
+        for obs in self.observations:
+            if obs['id'] == obs_id:
+                props.append(obs['name'])
+                if obs['type'] == 'value':
+                    props.append(obs['value'])
+                    props.append(obs['unit'])
+                break
+        return props
 
     def prepare_observations(self):
 
@@ -165,6 +191,30 @@ class PatientsData:
                 patient_res[0].save()
                 break
 
+    def update_medication_name(self, med_id, name):
+
+        client = SyncFHIRClient(HAPI_BASE_URL)
+        resources = client.resources('MedicationRequest')
+        resources = resources.search(_id=med_id).limit(1)
+        medication_res = resources.fetch()
+        medication_res[0]["medicationCodeableConcept"].coding[0].display = name
+        medication_res[0].save()
+
+    def update_observation_name_val(self,obs_id,name,val):
+
+        client = SyncFHIRClient(HAPI_BASE_URL)
+        resources = client.resources('Observation')
+        resources = resources.search(_id=obs_id).limit(1)
+        observation_res = resources.fetch()
+        observation_res[0]["code"].coding[0].display = name
+
+        if val > -999999.0:
+            observation_res[0]["valueQuantity"].value = val
+        observation_res[0].save()
+
+
+
+
 class Plot:
     def __init__(self):
         self.fig = Figure(figsize=(7, 4), dpi=100)
@@ -258,17 +308,18 @@ def main():
     
     gui = GUI("Karta pacjenta", 700, 500, False, patients_data)
 
+
+
     # DO TESTOW DATY I LADOWANIA
-    patient_list[0].prepare_medications()
-    patient_list[0].prepare_observations()
+    # patient_list[0].prepare_medications()
+    # patient_list[0].prepare_observations()
 
-
-    history = patient_list[0].get_history_in_range('2007-05-08','2008-01-02')  # yyyy-mm-dd
-    for x in history:
-        print("DATE: ", x['date']," | NAME: ",x['name'] )
+    # history = patient_list[0].get_history_in_range('2007-05-08','2008-01-02')  # yyyy-mm-dd
+    # for x in history:
+    #     print("DATE: ", x['date']," | NAME: ",x['name'] )
     # KONIEC TESTOW  DATY I LADOWANIA
 
-    patient_list[0].prepare_observations_values_names()
+    # patient_list[0].prepare_observations_values_names()
     #create_plot(patient_list[0],"Body Weight","2002-11-15",40000)     #np Blood Pressure  albo Body Weight
 
 
