@@ -8,6 +8,9 @@ import datetime as dt
 import numpy as np
 import matplotlib.pyplot as plt
 
+from matplotlib.figure import Figure
+
+
 HAPI_BASE_URL = "http://localhost:8080/baseR4"
 
 class Patient:
@@ -147,9 +150,10 @@ class PatientsData:
         
 class Plot:
     def __init__(self):
-        self.fig = None
+        self.fig = Figure(figsize=(7, 4), dpi=100)
 
     def create_plot(self, patient,observation_name,start_date, days):
+        print("CREATE PLOT:", observation_name)
         unit = ''
         x = []
         y = []
@@ -157,6 +161,9 @@ class Plot:
         unit2 =''
 
         specific_names =['','']
+        
+        if not self.fig is None:
+            self.fig.clear()
            
 
         start_date = dt.datetime.strptime(start_date, "%Y-%m-%d")
@@ -179,21 +186,25 @@ class Plot:
 
 
         if unit2 == '':
-            self.fig, ax = plt.subplots()
+            #self.fig, ax = plt.subplots()
+            self.fig.add_subplot(111)
             #fig.set_size_inches(14, 8)
-            self.fig.set_size_inches(7, 4)
-            
+            #self.fig.set_size_inches(7, 4)
+            ax = self.fig.gca()
             ax.plot(x, y, 'o--')
             ax.set(title=observation_name)
             plt.ylabel(unit, rotation=0)
 
             ax.grid()
             plt.xticks(rotation=0)
-            plt.show()
+            #plt.show()
 
         else:
-            self.fig, (ax1,ax2) = plt.subplots(2,1)
-            self.fig.set_size_inches(7, 4)
+            ax1 = self.fig.add_subplot(2,1,1)
+            ax2 = self.fig.add_subplot(2,1,2)
+            #self.fig, (ax1,ax2) = plt.subplots(2,1)
+            #self.fig.set_size_inches(7, 4)
+            #ax1, ax2 = self.fig.gca()
            
             ax1.plot(x, y, 'o--')
             ax1.set(title=specific_names[0])
@@ -204,13 +215,13 @@ class Plot:
             ax2.set_ylabel(unit2)
 
             #plt.ylabel(unit, rotation=0)
-            fig.tight_layout()
+            self.fig.tight_layout()
             ax1.grid()
             ax2.grid()
             plt.yticks(rotation=0)
             plt.xticks(rotation=0)
 
-            plt.show()
+            #plt.show()
         return self.fig
 
 
