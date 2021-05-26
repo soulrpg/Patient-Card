@@ -335,6 +335,8 @@ class GUI:
         self.edit_surname_button["state"] = "disabled"
         self.plot_button["state"] = "disabled"
         self.history_filter_button["state"] = "disabled"
+        self.block_patient_info_window = True
+
         self.plot_window = tk.Toplevel(self.form)
         self.plot_window.title("Wykres")
         self.plot_window.geometry("800x500")
@@ -405,6 +407,7 @@ class GUI:
         self.edit_surname_button["state"] = "normal"
         self.plot_button["state"] = "normal"
         self.history_filter_button["state"] = "normal"
+        self.block_patient_info_window = False
         self.plot_window.destroy()
         
     def filter_history(self):
