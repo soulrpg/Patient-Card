@@ -26,6 +26,9 @@ class Patient:
         self.medications = []
         self.observations_values_names = []
 
+    def set_surname(self, surname):
+        self.surname = surname
+
     def prepare_observations(self):
 
         if len(self.observations) == 0:
@@ -147,7 +150,22 @@ class PatientsData:
             if surname in patient.surname:
                 patients_filtered.append(patient)
         return patients_filtered
-        
+
+    def update_patient_surname(self, surname, id):
+        for patient in self.patients:
+            if patient.id == id:
+                patient.set_surname(surname)
+
+                #save on server
+                client = SyncFHIRClient(HAPI_BASE_URL)
+                resources = client.resources('Patient')
+                resources = resources.search(_id=id).limit(1)
+                patient_res = resources.fetch()
+                patient_res[0]["name"][0].family = surname
+                patient_res[0].save()
+
+                break
+
 class Plot:
     def __init__(self):
         self.fig = Figure(figsize=(7, 4), dpi=100)
@@ -193,7 +211,7 @@ class Plot:
             ax = self.fig.gca()
             ax.plot(x, y, 'o--')
             ax.set(title=observation_name)
-            plt.ylabel(unit, rotation=0)
+            ax.set_ylabel(unit)
 
             ax.grid()
             plt.xticks(rotation=0)
@@ -230,16 +248,16 @@ def main():
 
     resources = client.resources('Patient')
     resources = resources.search().limit(10000)
-    patients = resources.fetch()
+    patients_resource = resources.fetch()
     patient_list = []
-    for patient in patients:
+    for patient in patients_resource:
         patient_list.append(Patient(patient))
 
     print("(main) loaded",len(patient_list), "patients")
     
     patients_data = PatientsData(patient_list)
     
-    gui = GUI("Karta pacjenta", 600, 500, False, patients_data)
+    gui = GUI("Karta pacjenta", 700, 500, False, patients_data)
 
     # DO TESTOW DATY I LADOWANIA
     patient_list[0].prepare_medications()

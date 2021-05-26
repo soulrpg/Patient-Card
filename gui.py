@@ -36,7 +36,7 @@ class GUI:
         self.container = ttk.Frame(self.window)
         self.container.pack()
         
-        self.table_name = ttk.Label(self.container, text="Pacjenci")
+        self.table_name = ttk.Label(self.container, text="Surname search")
         self.table_name.pack(side=tk.TOP, pady=(20, 0))
         
         #self.surname_filter_label = ttk.Label(self.container, text="Filtr nazwiska:")
@@ -44,7 +44,10 @@ class GUI:
         
         vcmd = (self.window.register(self.filter_applied),
                 '%P')
-        self.surname_filter_entry = ttk.Entry(self.container, validate="key", validatecommand=vcmd, width = 30)
+        self.surname_filter_entry_text = tk.StringVar()
+        self.surname_filter_entry_text.set('')
+
+        self.surname_filter_entry = ttk.Entry(self.container, validate="key", validatecommand=vcmd, width = 30, textvariable=self.surname_filter_entry_text)
         self.surname_filter_entry.pack(side = tk.TOP, pady=(0, 20))
         
         self.tree_scroll = tk.Scrollbar(self.container)
@@ -64,13 +67,13 @@ class GUI:
         self.tree_view.column("Imie", anchor=tk.W, width=100)
         self.tree_view.column("Nazwisko", anchor=tk.W, width = 120) 
         self.tree_view.column("Data urodzenia", anchor=tk.W, width=120)
-        self.tree_view.column("ID", anchor=tk.W, width=120)
+        self.tree_view.column("ID", anchor=tk.W, width=280)
         
         # Nazwy kolumn
         self.tree_view.heading("Imie", text="Name", anchor=tk.CENTER)
         self.tree_view.heading("Nazwisko", text="Surname", anchor=tk.CENTER)
         self.tree_view.heading("Data urodzenia", text="Birth date", anchor=tk.CENTER)
-        self.tree_view.heading("ID", text="ID", anchor=tk.CENTER)
+        self.tree_view.heading("ID", text="Identifier", anchor=tk.CENTER)
         
         self.tree_view.pack()
         
@@ -122,7 +125,7 @@ class GUI:
     def patient_info_window(self, patient):
         self.form = tk.Toplevel(self.window)
         self.form.title("Dane pacjenta")
-        self.form.geometry("900x700")
+        self.form.geometry("1000x700")
         
         self.local_patient = patient
         
@@ -141,61 +144,89 @@ class GUI:
         
         self.id_text_value = tk.StringVar()
         self.id_text_value.set(patient.id)
+
+        self.identifier_text_value = tk.StringVar()
+        self.identifier_text_value.set(patient.identifier)
+
         
         # Glowna ramka
         self.form_container = ttk.Frame(self.form)
         self.form_container.pack(fill=tk.BOTH, expand=True)
         
-        self.card_title = ttk.Label(self.form_container, text="Dane pacjenta")
+        self.card_title = ttk.Label(self.form_container, text="Patient data")
         self.card_title.grid(row=0, column=3, sticky=tk.W, pady=(20, 0), padx=5)
         
         #self.names_label = ttk.Label(self.form_container, text="Name:")
         #self.names_label.grid(row=1, column=0, sticky=tk.W, pady=5, padx=5)
+
+        self.margin_label = ttk.Label(self.form_container, textvariable='        ')
+        self.margin_label.grid(row=1, column=0, sticky=tk.W, pady=5, padx=5)
+        self.margin_label2 = ttk.Label(self.form_container, textvariable='        ')
+        self.margin_label2.grid(row=2, column=0, sticky=tk.W, pady=5, padx=5)
+
+        self.name_text_label = ttk.Label(self.form_container, textvariable=self.name_text_value, background="#fefefe")
+        self.name_text_label.grid(row=1, column=1, sticky=tk.W, pady=5, padx=5)
         
-        self.name_text_label = ttk.Label(self.form_container, textvariable=self.name_text_value)
-        self.name_text_label.grid(row=1, column=0, sticky=tk.W, pady=5, padx=5)
-        
-        self.surname_text_label = ttk.Label(self.form_container, textvariable=self.surname_text_value)
-        self.surname_text_label.grid(row=1, column=1, sticky=tk.W, pady=5, padx=5)
+        self.surname_text_label = ttk.Label(self.form_container, textvariable=self.surname_text_value, background="#fefefe")
+        self.surname_text_label.grid(row=1, column=2, sticky=tk.W, pady=5, padx=5)
         
         self.gender_label = ttk.Label(self.form_container, text="Gender:")
-        self.gender_label.grid(row=2, column=0, sticky=tk.W, pady=5, padx=5)
+        self.gender_label.grid(row=2, column=1, sticky=tk.W, pady=5, padx=5)
         
-        self.gender_text_label = ttk.Label(self.form_container, textvariable=self.gender_text_value)
-        self.gender_text_label.grid(row=2, column=1, sticky=tk.W, pady=5, padx=5)
-        
+        self.gender_text_label = ttk.Label(self.form_container, textvariable=self.gender_text_value, background="#fefefe")
+        self.gender_text_label.grid(row=2, column=2, sticky=tk.W, pady=5, padx=5)
+
+        self.id_label = ttk.Label(self.form_container, text="Identifier:" )
+        self.id_label.grid( row=1, column=3, sticky=tk.W, pady=5, padx=5)
+        self.id_text_label = ttk.Label(self.form_container, textvariable=self.identifier_text_value, background="#fefefe")
+        self.id_text_label.grid(row=1, column=4, sticky=tk.W, pady=5, padx=5)
+
+        self.edit_surname_button = tk.Button(self.form_container, command=self.show_edit_surname_window, text="Edit surname",bg="#8899dd")
+        self.edit_surname_button.grid(row=1, column=5, sticky=tk.W, pady=5, padx=5)
+
         self.born_label = ttk.Label(self.form_container, text="Born:")
-        self.born_label.grid(row=1, column=2, sticky=tk.W, pady=5, padx=5)
-        self.born_text_label = ttk.Label(self.form_container, textvariable=self.born_text_value)
-        self.born_text_label.grid(row=1, column=3, sticky=tk.W, pady=5, padx=5)
-        
-        self.id_label = ttk.Label(self.form_container, text="ID:")
-        self.id_label.grid(row=2, column=2, sticky=tk.W, pady=5, padx=5)
-        self.id_text_label = ttk.Label(self.form_container, textvariable=self.id_text_value)
-        self.id_text_label.grid(row=2, column=3, sticky=tk.W, pady=5, padx=5, columnspan=2)
-        
+        self.born_label.grid(row=2, column=3, sticky=tk.W, pady=5, padx=5)
+        self.born_text_label = ttk.Label(self.form_container, textvariable=self.born_text_value, background="#fefefe")
+        self.born_text_label.grid(row=2, column=4, sticky=tk.W, pady=5, padx=5, columnspan=2)
+
+
+
+        # self.born_label = ttk.Label(self.form_container, text="Born:")
+        # self.born_label.grid(row=1, column=2, sticky=tk.W, pady=5, padx=5)
+        # self.born_text_label = ttk.Label(self.form_container, textvariable=self.born_text_value)
+        # self.born_text_label.grid(row=1, column=3, sticky=tk.W, pady=5, padx=5)
+        #
+        # self.id_label = ttk.Label(self.form_container, text="ID:")
+        # self.id_label.grid(row=2, column=2, sticky=tk.W, pady=5, padx=5)
+        # self.id_text_label = ttk.Label(self.form_container, textvariable=self.id_text_value)
+        # self.id_text_label.grid(row=2, column=3, sticky=tk.W, pady=5, padx=5, columnspan=2)
+
+        self.margin_label3 = ttk.Label(self.form_container, textvariable='        ')
+        self.margin_label3.grid(row=4, column=0, sticky=tk.W, pady=5, padx=5)
+
+
         self.start_date_label = ttk.Label(self.form_container, text="Start date:")
-        self.start_date_label.grid(row=4, column=0, sticky=tk.W, pady=5, padx=5)
+        self.start_date_label.grid(row=4, column=1, sticky=tk.W, pady=5, padx=5)
         
         self.start_date_entry = DateEntry(self.form_container, width=12, background='darkblue',
                     foreground='white', borderwidth=2, date_pattern='yyyy-mm-dd')
-        self.start_date_entry.grid(row=4, column=1, sticky=tk.W, pady=5, padx=5)
+        self.start_date_entry.grid(row=4, column=2, sticky=tk.W, pady=5, padx=5)
         
-        begin_date = datetime.datetime(1950, 1, 1)
+        begin_date = datetime.datetime(1980, 1, 1)
         end_date = datetime.datetime.now()
         
         self.end_date_label = ttk.Label(self.form_container, text="End date:")
-        self.end_date_label.grid(row=4, column=2, sticky=tk.W, pady=5, padx=5)
+        self.end_date_label.grid(row=4, column=3, sticky=tk.W, pady=5, padx=5)
         
         self.end_date_entry = DateEntry(self.form_container, width=12, background='darkblue',
                     foreground='white', borderwidth=2, date_pattern='yyyy-mm-dd')
-        self.end_date_entry.grid(row=4, column=3, sticky=tk.W, pady=5, padx=5)
+        self.end_date_entry.grid(row=4, column=4, sticky=tk.W, pady=5, padx=5)
         
         self.end_date_entry.set_date(end_date)
         self.start_date_entry.set_date(begin_date)
         
         self.history_filter_button = tk.Button(self.form_container, command=self.filter_history, text="Filter history", bg="yellow")
-        self.history_filter_button.grid(row=4, column=4, sticky=tk.W, pady=5, padx=5)
+        self.history_filter_button.grid(row=4, column=5, sticky=tk.W, pady=5, padx=5)
         
         #self.drop_down_list = ttk.Combobox(self.form_container, values=patient.observations_value_names)
         #self.drop_down_list.grid(row=4, column=4, sticky=tk.W, pady=5, padx=5)
@@ -218,7 +249,7 @@ class GUI:
 
         self.history_tree.column("Date", anchor=tk.W, width=100)
         self.history_tree.column("Type", anchor=tk.W, width = 80)
-        self.history_tree.column("Info", anchor=tk.W, width=450)
+        self.history_tree.column("Info", anchor=tk.W, width=600)
 
         self.history_tree.heading("Date", text="Date", anchor=tk.CENTER)
         self.history_tree.heading("Type", text="Type", anchor=tk.CENTER)
@@ -249,7 +280,7 @@ class GUI:
            info = event['name']
            img = self.obs_img
            if event['type']=='value':
-               info +=  str(event['value'])+': '+event['unit']
+               info +=  '\n'+str(event['value'])+' '+event['unit']
            elif event['type'] == 'values':
                info += '\n'+ event['specific_name'][0] +': ' +str(event['value'][0]) + ' ' + event['unit'][0] + '\n'
                info += event['specific_name'][1] +': ' +str(event['value'][1]) + ' ' + event['unit'][1]
@@ -273,7 +304,9 @@ class GUI:
         
     # Okno do wyswietlania wykresu
     def show_plot_window(self):
+        self.edit_surname_button["state"] = "disabled"
         self.plot_button["state"] = "disabled"
+        self.history_filter_button["state"] = "disabled"
         self.plot_window = tk.Toplevel(self.form)
         self.plot_window.title("Wykres")
         self.plot_window.geometry("800x500")
@@ -304,7 +337,7 @@ class GUI:
         self.update_plot_button = tk.Button(self.plot_container, command=self.update_plot_canvas, text="Make plot", bg="yellow")
         self.update_plot_button.grid(row=0, column=4, sticky=tk.W, pady=5, padx=5)
         
-        begin_date = datetime.datetime(1950, 1, 1)
+        begin_date = datetime.datetime(1980, 1, 1)
         
         self.start_date_entry_2.set_date(begin_date)
         
@@ -341,7 +374,9 @@ class GUI:
         self.plot_window.protocol("WM_DELETE_WINDOW", self.on_closing_plot)
         
     def on_closing_plot(self):
+        self.edit_surname_button["state"] = "normal"
         self.plot_button["state"] = "normal"
+        self.history_filter_button["state"] = "normal"
         self.plot_window.destroy()
         
     def filter_history(self):
@@ -387,11 +422,51 @@ class GUI:
         self.canvas._tkcanvas.grid(row=1, column=0, sticky=tk.W, pady=5, padx=5, rowspan=5, columnspan=5)
 
         
+    def show_edit_surname_window(self):
+        self.edit_surname_button["state"] = "disabled"
+        self.plot_button["state"] = "disabled"
+        self.history_filter_button["state"] = "disabled"
+
+        self.edit_surname_window = tk.Toplevel(self.form)
+        self.edit_surname_window.title("Edit surname")
+        self.edit_surname_window.geometry("300x100")
+
+
+        self.edit_surname_container = ttk.Frame(self.edit_surname_window)
+        self.edit_surname_container.pack(fill=tk.BOTH, expand=True)
+
+        self.new_surname_label = tk.Label(self.edit_surname_container, text="New surname:")
+        self.new_surname_label.grid(row=0, column=0, sticky=tk.W, pady=5, padx=5)
+
+        self.surname_edit_entry = ttk.Entry(self.edit_surname_container, validate="key", width=30)
+        self.surname_edit_entry.grid(row=0, column=1, sticky=tk.W, pady=5, padx=5)
+
+        self.save_surname_button = tk.Button(self.edit_surname_container, command=self.on_save_surname, text="Save",bg="yellow")
+        self.save_surname_button.grid(row=1, column=1, sticky=tk.W, pady=5, padx=5)
+
+        self.edit_surname_window.protocol("WM_DELETE_WINDOW", self.on_close_edit_surname)
+
+
+    def on_close_edit_surname(self):
+        self.edit_surname_button["state"] = "normal"
+        self.plot_button["state"] = "normal"
+        self.history_filter_button["state"] = "normal"
+        self.edit_surname_window.destroy()
+
+    def on_save_surname(self):
+        new_surname = self.surname_edit_entry.get()
+        print(new_surname)
+
+        self.local_patient.set_surname(new_surname)
+        self.surname_text_value.set(new_surname)
+
+        self.patients_data.update_patient_surname(new_surname,self.local_patient.id)
+        self.filter_applied('')
+        self.surname_filter_entry_text.set('')
+
+        self.on_close_edit_surname()
         
-        
-        
-        
-        
+
         
         
         
