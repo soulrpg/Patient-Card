@@ -242,7 +242,18 @@ class GUI:
 
         style.configure('myStyle1.Treeview', rowheight=48)
 
-        self.history_tree = ttk.Treeview(self.form_container,style='myStyle1.Treeview')
+        self.history_tree_scroll = tk.Scrollbar(self.form_container)
+        self.history_tree_scroll.grid(row=6, column=8, sticky='ns', pady=5, padx=5)
+
+        self.history_tree = ttk.Treeview(self.form_container,style='myStyle1.Treeview',yscrollcommand= self.history_tree_scroll.set)
+
+        # konfiguracja scrollbara
+        self.history_tree_scroll.config(command=self.history_tree.yview)
+
+
+
+
+
 
 
         #Definicja kolumn
@@ -269,7 +280,7 @@ class GUI:
         self.history_tree.grid(row=5, column=1, rowspan=3, columnspan=7, sticky=tk.W, pady=5, padx=5)
         
         self.plot_button = tk.Button(self.form_container, command=lambda arg=self.local_patient: self.show_plot_window(), text="Show plot", bg="yellow")
-        self.plot_button.grid(row=6, column=8, sticky=tk.W, pady=5, padx=5)
+        self.plot_button.grid(row=6, column=9, sticky=tk.W, pady=5, padx=5)
 
 
         # for i,event in enumerate(self.local_patient.get_history_in_range(str(self.start_date_entry.get_date()),str( self.end_date_entry.get_date()))):
