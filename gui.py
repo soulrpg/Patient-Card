@@ -606,7 +606,9 @@ class GUI:
         val = -999999.0
         try:
             if len(self.tmp_array) > 1:
-                val = float(self.observation_value_edit_entry.get().replace(',', '.'))
+                tmp_text = self.observation_value_edit_entry.get().replace(',', '.')
+                val = float(''.join([char for char in tmp_text if char.isdigit()]))
+                
             self.local_patient.set_observation_name_val(self.history_object_id, new_name, val)
 
             self.patients_data.update_observation_name_val(self.history_object_id, new_name, val)
