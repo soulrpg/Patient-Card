@@ -243,7 +243,7 @@ class GUI:
         style.configure('myStyle1.Treeview', rowheight=48)
 
         self.history_tree_scroll = tk.Scrollbar(self.form_container)
-        self.history_tree_scroll.grid(row=6, column=8, sticky='ns', pady=5, padx=5)
+        self.history_tree_scroll.grid(row=5, column=8, sticky='ns', pady=5, padx=5, rowspan=4)
 
         self.history_tree = ttk.Treeview(self.form_container,style='myStyle1.Treeview',yscrollcommand= self.history_tree_scroll.set)
 
